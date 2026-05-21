@@ -10,6 +10,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <permission
         android:name="com.cycle.speedometer.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
@@ -22,7 +23,7 @@
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:debuggable="true"
         android:extractNativeLibs="false"
-        android:icon="@android:drawable/sym_def_app_icon"
+        android:icon="@drawable/app_logo"
         android:label="Cycle"
         android:supportsRtl="true"
         android:testOnly="true"

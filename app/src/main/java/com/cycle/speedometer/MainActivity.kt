@@ -1,19 +1,26 @@
 package com.cycle.speedometer
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -67,6 +74,26 @@ class MainActivity : ComponentActivity() {
                 if (location != null) {
                     val currentSpeedKmH = gpsManager.speedFlow.value
                     rideTracker.onLocationUpdated(location, currentSpeedKmH)
+                }
+            }
+        }
+
+        // Speed threshold check for buzz sound
+        lifecycleScope.launch {
+            var isSpeedAlertArmed = true
+            gpsManager.speedFlow.collectLatest { currentSpeed ->
+                val rideStats = rideTracker.statsFlow.value
+                val isRideActive = rideStats.status == com.cycle.speedometer.tracking.RideStatus.ACTIVE
+                
+                if (isRideActive) {
+                    if (currentSpeed > 25.0f && isSpeedAlertArmed) {
+                        playLoudBuzz()
+                        isSpeedAlertArmed = false
+                    } else if (currentSpeed < 23.0f) {
+                        isSpeedAlertArmed = true
+                    }
+                } else {
+                    isSpeedAlertArmed = true
                 }
             }
         }
@@ -163,6 +190,36 @@ class MainActivity : ComponentActivity() {
         gpsManager.stopTracking()
         rideTracker.clear()
     }
+
+    private fun playLoudBuzz() {
+        try {
+            val toneGenerator = android.media.ToneGenerator(
+                android.media.AudioManager.STREAM_ALARM,
+                100
+            )
+            toneGenerator.startTone(android.media.ToneGenerator.TONE_SUP_ERROR, 800)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                toneGenerator.release()
+            }, 1000)
+
+            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+            if (vibrator.hasVibrator()) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator.vibrate(
+                        android.os.VibrationEffect.createOneShot(
+                            800,
+                            android.os.VibrationEffect.DEFAULT_AMPLITUDE
+                        )
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(800)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }
 
 @Composable
@@ -181,6 +238,18 @@ fun PermissionRequestScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
+            Image(
+                painter = painterResource(id = R.drawable.app_logo),
+                contentDescription = "App Logo",
+                modifier = Modifier
+                    .size(200.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, NeonGreen, CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = "Location Access Required",
                 color = TextWhite,

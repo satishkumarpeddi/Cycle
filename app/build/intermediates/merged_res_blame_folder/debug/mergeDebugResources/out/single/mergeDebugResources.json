@@ -2,5 +2,13 @@
     {
         "merged": "com.cycle.speedometer.app-debug-47:/drawable_app_logo.png.flat",
         "source": "com.cycle.speedometer.app-main-49:/drawable/app_logo.png"
+    },
+    {
+        "merged": "C:\\Users\\devel\\.gradle\\daemon\\8.10.2\\com.cycle.speedometer.app-debug-47:\\drawable_app_logo.png.flat",
+        "source": "C:\\Users\\devel\\.gradle\\daemon\\8.10.2\\com.cycle.speedometer.app-main-49:\\drawable\\app_logo.png"
+    },
+    {
+        "merged": "C:\\Users\\devel\\.gradle\\daemon\\8.10.2\\com.cycle.speedometer.app-debug-47:\\drawable_cyclist_retro.png.flat",
+        "source": "C:\\Users\\devel\\.gradle\\daemon\\8.10.2\\com.cycle.speedometer.app-main-49:\\drawable\\cyclist_retro.png"
     }
 ]
