@@ -71,7 +71,7 @@ fun DashboardScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = "Speedometer",
+                    text = "Redemption",
                     color = TextWhite,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
