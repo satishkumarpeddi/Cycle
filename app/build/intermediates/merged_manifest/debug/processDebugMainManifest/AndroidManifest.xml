@@ -26,7 +26,6 @@
         android:icon="@drawable/app_logo"
         android:label="Cycle"
         android:supportsRtl="true"
-        android:testOnly="true"
         android:theme="@android:style/Theme.NoTitleBar" >
         <activity
             android:name="com.cycle.speedometer.MainActivity"
