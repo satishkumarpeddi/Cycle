@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cycle.speedometer.ui.theme.CardOutline
+import com.cycle.speedometer.ui.theme.DarkBackground
 import com.cycle.speedometer.ui.theme.NeonGreen
 import com.cycle.speedometer.ui.theme.TextMuted
 import com.cycle.speedometer.ui.theme.TextWhite
