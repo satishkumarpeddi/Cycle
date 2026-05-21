@@ -21,3 +21,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Cycle"
 include(":app")
+
+gradle.beforeProject {
+    layout.buildDirectory.set(file("C:/Users/devel/.gradle_builds/Cycle/${name}"))
+}
