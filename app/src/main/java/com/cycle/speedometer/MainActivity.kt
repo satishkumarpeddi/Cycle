@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
@@ -17,8 +18,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.delay
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -104,52 +108,62 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val permissionState by hasLocationPermission
+                    var showSplashScreen by remember { mutableStateOf(true) }
                     
-                    if (permissionState) {
-                        // Gather telemetry states reactively
-                        val rideStats by rideTracker.statsFlow.collectAsState()
-                        val satelliteStatus by gpsManager.satellitesFlow.collectAsState()
-                        val isGpsEnabled by gpsManager.isGpsEnabled.collectAsState()
-                        
-                        DashboardScreen(
-                            rideStats = rideStats,
-                            satelliteStatus = satelliteStatus,
-                            isGpsEnabled = isGpsEnabled,
-                            riderWeightKg = rideTracker.riderWeightKg,
-                            onWeightChanged = { weight ->
-                                rideTracker.riderWeightKg = weight
-                            },
-                            onStartRide = {
-                                rideTracker.startRide()
-                            },
-                            onPauseToggle = {
-                                val currentStats = rideTracker.statsFlow.value
-                                if (currentStats.status == com.cycle.speedometer.tracking.RideStatus.ACTIVE) {
-                                    rideTracker.pauseRide()
-                                } else {
-                                    rideTracker.resumeRide()
-                                }
-                            },
-                            onResetRide = {
-                                rideTracker.resetRide()
-                            },
-                            onStopRide = {
-                                rideTracker.pauseRide()
+                    if (showSplashScreen) {
+                        SplashScreen(
+                            onAnimationFinished = {
+                                showSplashScreen = false
                             }
                         )
                     } else {
-                        // Beautiful Permission Request Landing UI
-                        PermissionRequestScreen(
-                            onRequestPermissions = {
-                                requestPermissionLauncher.launch(
-                                    arrayOf(
-                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                        val permissionState by hasLocationPermission
+                        
+                        if (permissionState) {
+                            // Gather telemetry states reactively
+                            val rideStats by rideTracker.statsFlow.collectAsState()
+                            val satelliteStatus by gpsManager.satellitesFlow.collectAsState()
+                            val isGpsEnabled by gpsManager.isGpsEnabled.collectAsState()
+                            
+                            DashboardScreen(
+                                rideStats = rideStats,
+                                satelliteStatus = satelliteStatus,
+                                isGpsEnabled = isGpsEnabled,
+                                riderWeightKg = rideTracker.riderWeightKg,
+                                onWeightChanged = { weight ->
+                                    rideTracker.riderWeightKg = weight
+                                },
+                                onStartRide = {
+                                    rideTracker.startRide()
+                                },
+                                onPauseToggle = {
+                                    val currentStats = rideTracker.statsFlow.value
+                                    if (currentStats.status == com.cycle.speedometer.tracking.RideStatus.ACTIVE) {
+                                        rideTracker.pauseRide()
+                                    } else {
+                                        rideTracker.resumeRide()
+                                    }
+                                },
+                                onResetRide = {
+                                    rideTracker.resetRide()
+                                },
+                                onStopRide = {
+                                    rideTracker.pauseRide()
+                                }
+                            )
+                        } else {
+                            // Beautiful Permission Request Landing UI
+                            PermissionRequestScreen(
+                                onRequestPermissions = {
+                                    requestPermissionLauncher.launch(
+                                        arrayOf(
+                                            Manifest.permission.ACCESS_FINE_LOCATION,
+                                            Manifest.permission.ACCESS_COARSE_LOCATION
+                                        )
                                     )
-                                )
-                            }
-                        )
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -238,15 +252,26 @@ fun PermissionRequestScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.app_logo),
-                contentDescription = "App Logo",
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
-                    .size(200.dp)
-                    .clip(CircleShape)
-                    .border(2.dp, NeonGreen, CircleShape),
-                contentScale = ContentScale.Crop
-            )
+                    .fillMaxWidth(0.85f)
+                    .height(180.dp)
+                    .border(2.dp, NeonGreen, RoundedCornerShape(16.dp))
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo),
+                        contentDescription = "App Logo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -282,6 +307,128 @@ fun PermissionRequestScreen(
                     fontSize = 15.sp
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun SplashScreen(
+    onAnimationFinished: () -> Unit
+) {
+    // Entrance animations
+    val scale = remember { androidx.compose.animation.core.Animatable(0f) }
+    val alpha = remember { androidx.compose.animation.core.Animatable(0f) }
+    
+    // Heartbeat border / glow pulse effect
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val glowPulse by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow"
+    )
+
+    LaunchedEffect(Unit) {
+        // Run entrance animations concurrently
+        launch {
+            scale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+        }
+        launch {
+            alpha.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
+            )
+        }
+        
+        // Show splash screen for 2.2 seconds
+        delay(2200L)
+        
+        // Exit animation (smooth fade out)
+        alpha.animateTo(
+            targetValue = 0f,
+            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+        )
+        onAnimationFinished()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DarkBackground),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.graphicsLayer(
+                scaleX = scale.value,
+                scaleY = scale.value,
+                alpha = alpha.value
+            )
+        ) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .size(200.dp)
+                    .border(
+                        width = (2.dp * glowPulse),
+                        color = NeonGreen.copy(alpha = glowPulse),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .shadow(
+                        elevation = (12.dp * glowPulse),
+                        shape = RoundedCornerShape(24.dp),
+                        ambientColor = NeonGreen,
+                        spotColor = NeonGreen
+                    ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo),
+                        contentDescription = "App Logo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(28.dp))
+            
+            Text(
+                text = "REDEMPTION SPEEDOMETER",
+                color = TextWhite,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 3.sp,
+                modifier = Modifier.graphicsLayer(alpha = alpha.value)
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Tracking Every Pedal Stroke",
+                color = TextMuted,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 1.sp,
+                modifier = Modifier.graphicsLayer(alpha = alpha.value * 0.7f)
+            )
         }
     }
 }

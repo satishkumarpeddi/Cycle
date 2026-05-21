@@ -425,6 +425,7 @@ fun DashboardScreen(
                         onClick = {
                             showSummaryDialog = false
                             summaryStats = null
+                            onResetRide()
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = NeonGreen, contentColor = Color.Black),
                         modifier = Modifier.fillMaxWidth(),

@@ -38,7 +38,6 @@ class GpsManager(private val context: Context) {
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             val location = locationResult.lastLocation ?: return
-            _locationFlow.value = location
             
             // Speed from GPS is in meters/second. Convert to km/h (1 m/s = 3.6 km/h)
             val speedKmH = if (location.hasSpeed()) {
@@ -47,6 +46,7 @@ class GpsManager(private val context: Context) {
                 0f
             }
             _speedFlow.value = speedKmH
+            _locationFlow.value = location
         }
 
         override fun onLocationAvailability(locationAvailability: LocationAvailability) {
