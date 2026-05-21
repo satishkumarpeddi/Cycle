@@ -40,6 +40,9 @@ fun SpeedometerGauge(
         label = "NeedleSweep"
     )
 
+    val isSpeedLimitExceeded = currentSpeed > 25f
+    val gaugeColor = if (isSpeedLimitExceeded) Color.Red else NeonGreen
+
     Box(
         modifier = modifier.aspectRatio(1f),
         contentAlignment = Alignment.Center
@@ -74,11 +77,11 @@ fun SpeedometerGauge(
                 style = Stroke(width = 16.dp.toPx(), cap = StrokeCap.Round)
             )
 
-            // 2. Draw active speed track glow (semi-translucent neon green arc)
+            // 2. Draw active speed track glow (semi-translucent neon green or red arc)
             if (animatedSpeed > 0.1f) {
                 val activeSweep = (animatedSpeed / maxSpeedDisplay) * totalSweep
                 drawArc(
-                    color = NeonGreen.copy(alpha = 0.15f),
+                    color = gaugeColor.copy(alpha = 0.15f),
                     startAngle = startAngle,
                     sweepAngle = activeSweep,
                     useCenter = false,
@@ -115,7 +118,7 @@ fun SpeedometerGauge(
                 
                 // Active speed portion glowing tick color
                 val isTickActive = speed <= animatedSpeed
-                val tickColor = if (isTickActive) NeonGreen else TextMuted.copy(alpha = 0.4f)
+                val tickColor = if (isTickActive) gaugeColor else TextMuted.copy(alpha = 0.4f)
 
                 val startX = center.x + (tickRadius - tickLength) * cos(angleRad).toFloat()
                 val startY = center.y + (tickRadius - tickLength) * sin(angleRad).toFloat()
@@ -155,7 +158,7 @@ fun SpeedometerGauge(
             
             // Outer glow circle
             drawCircle(
-                color = NeonGreen.copy(alpha = 0.2f),
+                color = gaugeColor.copy(alpha = 0.2f),
                 radius = centerRadius1 + 8.dp.toPx(),
                 center = center
             )
@@ -168,7 +171,7 @@ fun SpeedometerGauge(
             )
             // Inner green pivot dot
             drawCircle(
-                color = NeonGreen,
+                color = gaugeColor,
                 radius = centerRadius2,
                 center = center
             )
@@ -189,7 +192,7 @@ fun SpeedometerGauge(
 
             // Glowing line style needle
             drawLine(
-                color = NeonGreen,
+                color = gaugeColor,
                 start = center,
                 end = androidx.compose.ui.geometry.Offset(needleEndX, needleEndY),
                 strokeWidth = 5.dp.toPx(),
@@ -215,13 +218,13 @@ fun SpeedometerGauge(
         ) {
             Text(
                 text = String.format("%.0f", currentSpeed),
-                color = TextWhite,
+                color = if (isSpeedLimitExceeded) Color.Red else TextWhite,
                 fontSize = 58.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = "km/h",
-                color = TextMuted,
+                color = if (isSpeedLimitExceeded) Color.Red.copy(alpha = 0.7f) else TextMuted,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.offset(y = (-4).dp)

@@ -82,22 +82,24 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Speed threshold check for buzz sound
+        // Speed threshold check for buzz sound (Pacing Drop Alert: plays when falling below 25 km/h)
         lifecycleScope.launch {
-            var isSpeedAlertArmed = true
+            var isBelowSpeedAlertArmed = false
             gpsManager.speedFlow.collectLatest { currentSpeed ->
                 val rideStats = rideTracker.statsFlow.value
                 val isRideActive = rideStats.status == com.cycle.speedometer.tracking.RideStatus.ACTIVE
                 
                 if (isRideActive) {
-                    if (currentSpeed > 25.0f && isSpeedAlertArmed) {
+                    if (currentSpeed >= 25.0f) {
+                        // Rider is above the limit; arm the drop alert
+                        isBelowSpeedAlertArmed = true
+                    } else if (currentSpeed < 25.0f && isBelowSpeedAlertArmed) {
+                        // Rider just dropped below 25 km/h target pace; play the warning buzz
                         playLoudBuzz()
-                        isSpeedAlertArmed = false
-                    } else if (currentSpeed < 23.0f) {
-                        isSpeedAlertArmed = true
+                        isBelowSpeedAlertArmed = false // Disarm until they exceed 25 km/h again
                     }
                 } else {
-                    isSpeedAlertArmed = true
+                    isBelowSpeedAlertArmed = false
                 }
             }
         }
